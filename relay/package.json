@@ -1,0 +1,27 @@
+{
+  "name": "@personal-agent/relay-server",
+  "version": "1.0.0",
+  "description": "Personal Agent relay server — bridges CLI and iPhone WebSocket connections",
+  "type": "module",
+  "main": "src/server.ts",
+  "scripts": {
+    "start": "node --import tsx src/server.ts",
+    "dev": "node --watch --import tsx src/server.ts",
+    "typecheck": "tsc --noEmit",
+    "test:e2e": "node --import tsx test/e2e.ts"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.2",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/jsonwebtoken": "^9.0.6",
+    "@types/node": "^20.14.0",
+    "@types/ws": "^8.5.10",
+    "tsx": "^4.16.0",
+    "typescript": "^5.4.0"
+  }
+}
