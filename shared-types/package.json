@@ -1,0 +1,15 @@
+{
+  "name": "@personal-agent/shared-types",
+  "version": "1.0.0",
+  "description": "Shared protocol types for Personal Agent relay (CLI + Relay Server + iPhone App)",
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.4.0"
+  }
+}
