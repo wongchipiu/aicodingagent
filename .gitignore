@@ -1,0 +1,69 @@
+# Dependencies
+node_modules/
+**/node_modules/
+**/node_modules/**
+
+# Build outputs
+dist/
+build/
+*.tsbuildinfo
+
+# Environment & secrets
+.env
+.env.local
+.env.*.local
+*.pem
+.gitlab-token
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+_desensitize.log
+_verify.log
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+.bak/
+.bak
+**/.bak/
+
+# Runtime / temp
+.tmp/
+.personal-agent/
+*.tgz
+claude-code-2.1.88.tgz
+
+# Xcode
+xcuserdata/
+**/xcuserdata/
+DerivedData/
+**/DerivedData/
+*.xcuserstate
+**/*.xcuserstate
+
+# iOS
+ios/Pods/
+ios/.build/
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Docker
+.docker/
+
+# Misc
+*.pid
+*.seed
+*.pid.lock
+coverage/
+.nyc_output/
+
+# Bun
+bun.lockb
