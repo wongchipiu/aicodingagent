@@ -1,69 +1,25 @@
-# Dependencies
-node_modules/
-**/node_modules/
-**/node_modules/**
+# CodeBuddy 本地状态（plans/memories/teams 等）
+.codebuddy/
 
-# Build outputs
+# 依赖
+node_modules/
+
+# 构建产物
 dist/
 build/
-*.tsbuildinfo
+*.js.map
 
-# Environment & secrets
+# 环境变量
 .env
 .env.local
 .env.*.local
-*.pem
-.gitlab-token
 
-# Logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-_desensitize.log
-_verify.log
-
-# OS / Editor
+# 系统文件
 .DS_Store
 Thumbs.db
+
+# IDE
 .vscode/
 .idea/
 *.swp
 *.swo
-.bak/
-.bak
-**/.bak/
-
-# Runtime / temp
-.tmp/
-.personal-agent/
-*.tgz
-claude-code-2.1.88.tgz
-
-# Xcode
-xcuserdata/
-**/xcuserdata/
-DerivedData/
-**/DerivedData/
-*.xcuserstate
-**/*.xcuserstate
-
-# iOS
-ios/Pods/
-ios/.build/
-*.ipa
-*.dSYM.zip
-*.dSYM
-
-# Docker
-.docker/
-
-# Misc
-*.pid
-*.seed
-*.pid.lock
-coverage/
-.nyc_output/
-
-# Bun
-bun.lockb

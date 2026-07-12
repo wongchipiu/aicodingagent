@@ -206,14 +206,15 @@ npx tsx src/main.tsx
 
 ### 5.2 在 Xcode 中打开
 
-1. Finder 打开 `iphone-app/` 目录
-2. 如果已有 `.xcodeproj`，双击打开
-3. 如果是首次构建，需要创建 Xcode 项目：
+1. 如果已有 `.xcodeproj`，双击打开即可
+2. 如果是首次构建（仓库不含 `.xcodeproj`），需要用 Xcode 创建项目：
    - `File → New → Project → iOS → App`
    - Product Name: `PersonalAgentRemote`
    - Interface: SwiftUI，Language: Swift
-   - 保存到 `iphone-app/`
-4. 将 `iphone-app/PersonalAgentRemote/` 下的所有 Swift 文件拖入项目
+   - **保存到项目根目录**（不是 `iphone-app/`，否则会与源码文件夹同名冲突）
+3. 将 `iphone-app/PersonalAgentRemote/` 下的所有 Swift 文件拖入项目
+
+> 📖 **首次构建详细操作指南**（含目录结构图、模板文件清理、ATS 配置、签名、FAQ）见 [§5.6](#56-macbook-编译-iphone-app-到真机详细步骤)。
 
 ### 5.3 配置签名
 
@@ -235,6 +236,303 @@ iPhone 上安装后可能提示"不受信任的开发者"：
 ```
 设置 → 通用 → VPN与设备管理 → 找到你的 Apple ID → 点击"信任"
 ```
+
+### 5.6 MacBook 编译 iPhone App 到真机（详细步骤）
+
+> 本节是从零开始在 MacBook 上创建 Xcode 项目、挂载源码、签名并装机到 iPhone 真机的**完整手把手指南**。如果你已熟悉 Xcode，可直接参考 §5.1–5.5 的精简步骤。
+
+#### 5.6.1 前置检查
+
+| 项目 | 要求 |
+|------|------|
+| MacBook | macOS 14.0+（Sonoma 或更高） |
+| Xcode | 15.0+（从 Mac App Store 免费安装） |
+| iPhone | iOS 17.0+ |
+| 数据线 | 原装或 MFi 认证 Lightning / USB-C 线 |
+| Apple ID | 任意免费账号即可（免费账号签名有效期 7 天，到期重新编译即可） |
+
+确认 Xcode 已安装命令行工具：
+
+```bash
+xcode-select -p
+# 预期输出: /Applications/Xcode.app/Contents/Developer
+```
+
+如未安装：`xcode-select --install`
+
+#### 5.6.2 把项目同步到 MacBook
+
+**方式 A：Git Clone（推荐）**
+
+```bash
+cd ~/Documents
+git clone <你的仓库地址> aicodingagent
+cd aicodingagent
+```
+
+**方式 B：U 盘 / 网盘拷贝**
+
+将 Windows 上的整个项目文件夹复制到 MacBook，假设放到 `~/Documents/aicodingagent/`。
+
+同步后确认目录结构：
+
+```
+~/Documents/aicodingagent/
+├── iphone-app/
+│   ├── Info.plist
+│   ├── Package.swift
+│   ├── README.md
+│   └── PersonalAgentRemote/          ← 仓库源码（含 @main 入口）
+│       ├── PersonalAgentApp.swift
+│       ├── Assets.xcassets/
+│       ├── Models/
+│       ├── Services/
+│       ├── ViewModels/
+│       └── Views/
+├── relay/
+├── restored-src/
+├── docker-compose.yml
+└── docs/
+```
+
+> ⚠️ 此时**没有** `.xcodeproj` 文件，需要用 Xcode 从零创建。SPM（Package.swift）不支持 iOS 真机签名，必须走 Xcode GUI 创建 iOS App 项目。
+
+#### 5.6.3 从零创建 Xcode 项目
+
+1. 打开 **Xcode** → 菜单栏 **File → New → Project**
+2. 选择 **iOS → App** → 点击 **Next**
+3. 填写项目信息：
+
+   | 字段 | 填写值 |
+   |------|--------|
+   | Product Name | `PersonalAgentRemote`（**首字母大写，严格一致**） |
+   | Team | 暂时选 None，稍后配置 |
+   | Organization Identifier | `com.你的名字`（如 `com.bruce`） |
+   | Interface | `SwiftUI` |
+   | Language | `Swift` |
+   | Storage | `None`（不使用 Core Data） |
+   | Include Tests | 不勾选 |
+
+4. 点击 **Next** → 选择保存路径
+5. **关键**：保存到 `~/Documents/aicodingagent/`（**选项目根目录这一层，不要选 `iphone-app/`！**）
+6. 点击 **Create**
+
+> ⚠️ **为什么存到项目根目录而不是 `iphone-app/`？**
+> Xcode 会在你选的目录下自动创建一个与 Product Name 同名的文件夹（`PersonalAgentRemote/`）。如果存到 `iphone-app/` 下，会与仓库已有的 `iphone-app/PersonalAgentRemote/` 源码文件夹冲突，Xcode 会提示"folder already exists, move to trash?"——**千万不要点 Move to Trash**，那会删掉你的源码。存到项目根目录 `aicodingagent/` 下则不会冲突。
+
+创建后的目录结构：
+
+```
+~/Documents/aicodingagent/
+├── iphone-app/                         ← 仓库代码（未动）
+│   ├── Info.plist
+│   ├── Package.swift
+│   └── PersonalAgentRemote/            ← 仓库源码（未动）
+├── PersonalAgentRemote.xcodeproj/      ← 🆕 Xcode 项目文件
+├── PersonalAgentRemote/                ← 🆕 Xcode 自动建的空壳
+│   ├── PersonalAgentRemoteApp.swift    ← ❌ 模板文件（待删）
+│   ├── ContentView.swift               ← ❌ 模板文件（待删）
+│   └── Assets.xcassets/                ← ❌ 模板文件（待删）
+├── relay/
+└── ...
+```
+
+#### 5.6.4 删除模板文件 + 挂载仓库源码
+
+**第 1 步：删除 Xcode 自动生成的模板文件**
+
+在 Xcode 左侧导航器（Project Navigator）中，右键点击以下 3 个文件 → 选择 **Delete** → 在弹窗中点击 **Move to Trash**：
+
+- `PersonalAgentRemoteApp.swift`（模板入口，与仓库的 `PersonalAgentApp.swift` 冲突）
+- `ContentView.swift`（模板视图）
+- `Assets.xcassets`（模板资源）
+
+> ⚠️ 这一步**必须做**。如果不删，项目里会有两个 `@main` 入口，编译报错。
+
+**第 2 步：将仓库源码拖入项目**
+
+1. 打开 **Finder**，导航到 `~/Documents/aicodingagent/iphone-app/PersonalAgentRemote/`
+2. 选中以下 6 个文件/文件夹（按 `Cmd+A` 全选即可）：
+   - `PersonalAgentApp.swift`
+   - `Assets.xcassets/`
+   - `Models/`
+   - `Services/`
+   - `ViewModels/`
+   - `Views/`
+3. **拖入** Xcode 左侧导航器的 `PersonalAgentRemote` group（黄色文件夹图标）下
+4. 弹窗中配置：
+
+   | 选项 | 设置 |
+   |------|------|
+   | Copy items if needed | ✅ 勾选（把文件复制到项目目录） |
+   | Added folders | 选择 **Create groups**（不是 Create folder references） |
+   | Add to targets | ✅ 勾选 `PersonalAgentRemote` |
+
+5. 点击 **Finish**
+
+**第 3 步：验证**
+
+Xcode 左侧导航器中应能看到：
+
+```
+PersonalAgentRemote
+├── PersonalAgentApp.swift    ← 带 @main 标记 ✅
+├── Assets.xcassets
+├── Models
+│   └── AgentMessage.swift
+├── Services
+│   ├── AuthService.swift
+│   ├── NotificationService.swift
+│   └── RelayWebSocket.swift
+├── ViewModels
+│   └── ChatViewModel.swift
+└── Views
+    ├── ContentView.swift
+    ├── LoginView.swift
+    ├── ChatView.swift
+    ├── PermissionView.swift
+    ├── SessionListView.swift
+    └── SettingsView.swift
+```
+
+#### 5.6.5 配置 ATS 与后台模式
+
+仓库的 `iphone-app/Info.plist` 已预配置好 ATS（允许 HTTP 连接）和后台推送模式。你有两种方式将这些配置应用到 Xcode 项目：
+
+**方案 A（推荐）：在 Xcode 项目 Info 页手动注入**
+
+1. Xcode 左侧点击项目名 `PersonalAgentRemote` → 中间面板选 **TARGETS → PersonalAgentRemote → Info**
+2. 在 **Custom iOS Target Properties** 表格中点击 `+` 添加以下键：
+
+   | Key | Type | Value |
+   |-----|------|-------|
+   | App Transport Security Settings | Dictionary | （展开后添加子项） |
+   | └ Allow Arbitrary Loads | Boolean | `YES` |
+   | └ Allows Local Networking | Boolean | `YES` |
+
+3. 切换到 **Signing & Capabilities** 标签 → 点击左上角 **+ Capability**
+4. 搜索 **Background Modes** → 双击添加
+5. 勾选 **Remote notifications**
+
+**方案 B（保真）：直接引用仓库的 Info.plist**
+
+1. Xcode 左侧点击项目名 → **TARGETS → PersonalAgentRemote → Info**
+2. 找到 **Info.plist File**（或 Build Settings → Packaging → Info.plist File）
+3. 设置为 `iphone-app/Info.plist` 的路径
+4. 确认 **Background Modes** capability 中勾选了 **Remote notifications**
+
+> 两种方案效果相同，选一种即可。方案 A 更常见，方案 B 保证与仓库配置完全一致。
+
+#### 5.6.6 配置签名
+
+1. Xcode 左侧点击项目名 `PersonalAgentRemote` → **TARGETS → PersonalAgentRemote → Signing & Capabilities**
+2. 勾选 ✅ **Automatically manage signing**
+3. **Team** 下拉 → 点击 **Add Account...** → 登录你的 Apple ID（免费账号即可）
+4. 登录后回到 Xcode，Team 下拉选择你的 Apple ID（Personal Team）
+5. **Bundle Identifier** 改为全局唯一值，如 `com.你的名字.PersonalAgentRemote`
+
+> ⚠️ Bundle ID 必须全球唯一。如果提示 "identifier already in use"，换一个前缀再试。
+
+#### 5.6.7 真机准备
+
+1. 用数据线将 iPhone 连接到 MacBook
+2. iPhone 弹窗 → 点击 **信任** → 输入锁屏密码
+3. iPhone → **设置 → 隐私与安全 → 开发者模式**
+4. 打开 **开发者模式** 开关 → 弹窗确认 → iPhone 自动重启
+5. 重启后回到 Xcode，顶部设备选择器（左上角播放按钮右侧）→ 选择你的 **iPhone 真机**
+
+> 如果看不到 iPhone：Xcode 菜单 → **Window → Devices and Simulators** → 确认设备已列出且状态为 connected。
+
+#### 5.6.8 编译装机
+
+1. Xcode 顶部确认选中的是你的 iPhone 真机（不是模拟器）
+2. 点击 **Run** 按钮（或 `Cmd + R`）
+3. 首次编译会自动：
+   - 向 Apple 注册你的设备 UDID（免费账号每季度限 3 台设备）
+   - 生成签名证书和 Provisioning Profile
+   - 编译并安装到 iPhone
+
+4. 编译成功后 Xcode 底部状态栏显示 `Running PersonalAgentRemote on <你的iPhone>`
+
+#### 5.6.9 首次信任 + 7 天续签
+
+**首次信任开发者证书：**
+
+iPhone 上首次打开 App 可能闪退或提示"不受信任的开发者"：
+
+```
+iPhone → 设置 → 通用 → VPN与设备管理 → 找到你的 Apple ID → 点击"信任"
+```
+
+信任后重新打开 App 即可正常使用。
+
+**7 天续签（免费账号限制）：**
+
+免费 Apple ID 签名的 App 有效期仅 **7 天**，过期后 App 打不开。续签方法：
+
+1. iPhone 连上 MacBook
+2. Xcode 打开项目 → `Cmd + R` 重新编译安装
+3. 签名自动刷新，又能用 7 天
+
+> 💡 如果觉得 7 天太短，可以花 $99/年注册 Apple Developer Program，签名有效期延长至 1 年。
+
+#### 5.6.10 FAQ
+
+| 问题 | 解决方案 |
+|------|----------|
+| **"Failed to register device"** | 免费账号每季度限注册 3 台设备。换一个 Apple ID 或等待下季度配额重置 |
+| **"No signing certificate"** | Xcode → Settings → Accounts → 重新登录 Apple ID；检查 Mac 系统时间是否正确 |
+| **"Bundle identifier already in use"** | Bundle ID 不唯一，改为 `com.你的名字.xxx` 换一个前缀 |
+| **App 装上后闪退** | 确认 iOS 17+；Xcode → Window → Devices and Simulators → 选设备 → View Device Logs 查看崩溃日志 |
+| **HTTP 请求被拦截** | 确认 ATS 配置中 `NSAllowsArbitraryLoads = YES` 已注入（见 §5.6.5） |
+| **"folder already exists, move to trash?"** | 创建项目时选错了保存路径。点 Cancel，改为存到项目根目录（不是 `iphone-app/`） |
+| **编译报 "duplicate @main"** | 忘了删模板文件。回到 §5.6.4 第 1 步删除 `PersonalAgentRemoteApp.swift` |
+| **Xcode 看不到 iPhone** | 数据线问题 / iPhone 未信任 Mac / 未开启开发者模式。逐项检查 §5.6.7 |
+| **添加 Apple ID 报 AKAuthenticationError -7045** | 认证服务器通信失败，多由网络/代理引起。详见 §5.6.11 |
+
+#### 5.6.11 添加 Apple ID 报错排查（AKAuthenticationError -7045 等）
+
+Xcode 在 `Settings → Accounts → +` 添加 Apple ID 时报 `(AKAuthenticationError error -7045.)`，表示 Xcode 与 Apple 认证服务器通信失败，**不是账号密码本身的问题**。按以下顺序排查：
+
+**1. 网络与代理（最常见原因）**
+
+| 你的情况 | 操作 |
+|----------|------|
+| 开着 Charles / 青花瓷 / Surge / ClashX 等抓包代理 | **全部退出**，它们会拦截 Apple 的 SSL 证书导致认证失败 |
+| 国内网络无法直连 Apple 服务器 | 开启 VPN/代理的**全局模式**后重试 |
+| DNS 污染 | 系统设置 → 网络 → Wi-Fi → 详细信息 → DNS → 添加 `8.8.8.8`、`114.114.114.114` |
+
+**2. 清理失败的账号记录**
+
+1. Xcode → **Settings → Accounts**
+2. 列表里如有刚才添加失败的账号（通常显示红色错误），选中后点下方 **"-"** 删除
+3. 重新点 **"+"** 添加 Apple ID
+
+**3. 清理 Keychain 旧凭据**
+
+1. `Cmd + Space` 搜索并打开 **钥匙串访问**（Keychain Access）
+2. 左侧选择 **"登录"** 钥匙串
+3. 上方标签选 **"所有项目"**，搜索框输入 `apple`
+4. 找到与 Apple ID / developer / Xcode 相关的旧条目 → 右键 → **删除**（需输入 Mac 登录密码确认）
+5. 重启 Xcode 后重新添加账号
+
+**4. 校准系统时间**
+
+SSL 证书验证依赖准确时间，时间偏差会导致认证失败：
+
+- 系统设置 → 通用 → 日期与时间 → 开启 **"自动设置日期与时间"**
+- 时区选 **"自动"**
+
+**5. 确认 Apple ID 双重认证**
+
+- 访问 [appleid.apple.com](https://appleid.apple.com) → 登录 → **安全性** → 确认 **"双重认证"** 已开启
+- 登录 Xcode 时确保能收到验证码（短信或受信任设备）
+
+**6. 重启**
+
+关闭 Xcode → 退出所有代理软件 → **重启 Mac** → 重新打开 Xcode 添加账号
+
+> 💡 若以上均无效，尝试换一个 Apple ID 添加；或等几小时后再试（Apple 认证服务偶尔波动）。
 
 ---
 

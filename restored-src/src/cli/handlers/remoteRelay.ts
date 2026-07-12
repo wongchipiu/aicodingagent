@@ -10,7 +10,7 @@
  *   PA_RELAY_KEY  — 预共享密钥
  */
 
-import { setRelayConfig } from '../bootstrap/state.js'
+import { setRelayConfig } from '../../bootstrap/state.js'
 import {
   loadRelayClientConfig,
   registerWithRelay,
@@ -19,7 +19,7 @@ import {
   RelayConnector,
   RelayPermissionBridge,
   RelaySessionManager,
-} from '../relay/index.js'
+} from '../../relay/index.js'
 
 interface RemoteRelayOptions {
   pair?: boolean

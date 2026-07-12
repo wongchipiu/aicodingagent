@@ -1,0 +1,7 @@
+preload = ["./preload.ts"]
+
+[install]
+auto = "fallback"
+
+[jsx]
+runtime = "automatic"
