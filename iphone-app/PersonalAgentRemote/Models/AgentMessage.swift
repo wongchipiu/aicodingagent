@@ -3,7 +3,7 @@
 //  PersonalAgentRemote
 //
 //  自定义 AgentMessage 类型，映射中继协议 JSON。
-//  不引用任何 Anthropic SDK。
+//  零第三方 SDK 依赖，纯原生 Swift 实现。
 //
 
 import Foundation

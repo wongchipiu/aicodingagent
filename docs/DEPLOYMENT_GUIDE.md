@@ -26,8 +26,8 @@
 │   CLI PC    │◄─────────────────────────►│ Relay Server │◄─────────────────────────►│   iPhone    │
 │  (Agent)    │                            │  (Node.js)   │                            │  (SwiftUI)   │
 │             │                            │  自建 VPS     │                            │             │
-│ LLM 调用:    │                            │ 无 Anthropic │                            │             │
-│ OpenAI /    │                            │ 依赖         │                            │             │
+│ LLM 调用:    │                            │ 自建认证     │                            │             │
+│ OpenAI /    │                            │ 自建中继     │                            │             │
 │ Ollama      │                            │              │                            │             │
 └─────────────┘                            └──────────────┘                            └──────────────┘
 ```
@@ -41,7 +41,7 @@
 | iPhone App | `iphone-app/` | SwiftUI + iOS 17+ | 远程对话、权限审批、会话管理 |
 | 共享类型 | `shared-types/` | TypeScript | 三端共用的消息协议定义 |
 
-**核心设计原则：零 Anthropic 依赖。** 不使用 Anthropic Claude API、不使用 Anthropic OAuth、不使用 Anthropic CCR 云桥。LLM Provider 完全用户自主（OpenAI / Ollama / DeepSeek / 任意 OpenAI 兼容 API）。
+**核心设计原则：完全自主可控。** 自建认证、自建中继、自建消息协议。LLM Provider 完全用户自主（OpenAI / Ollama / DeepSeek / 任意 OpenAI 兼容 API）。
 
 ---
 

@@ -1,6 +1,6 @@
 # Personal Agent Relay Server
 
-中继服务器 — 桥接 CLI 和 iPhone 的 WebSocket 连接，完全不依赖 Anthropic 云服务。
+中继服务器 — 桥接 CLI 和 iPhone 的 WebSocket 连接，自建认证与消息路由。
 
 ## 快速启动
 

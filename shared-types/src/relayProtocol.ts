@@ -2,7 +2,7 @@
  * RelayProtocol — 中继服务器协议定义
  *
  * 定义 CLI/Relay/iPhone 三端通信的认证、会话管理、消息路由协议。
- * 完全自建，不依赖 Anthropic OAuth/CCR。
+ * 自建认证 + 自建中继，零外部 SDK 依赖。
  */
 
 import type {

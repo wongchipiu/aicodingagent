@@ -2,11 +2,12 @@
 
 ## 项目概述
 
-基于 SmartAgent Code v2.1.88 源码，打造个人定制化 AI Agent，服务于：
+打造一个**个人定制化的 AI Agent 框架**，基于开源 CLI 工具改造而来，服务于：
 - 文件整理与自动化
 - 系统监控
 - 财经信息采集
 - 股市量化策略开发
+- iPhone 远程控制
 
 ---
 
@@ -20,7 +21,7 @@
 
 ```bash
 # 1. 安装依赖
-cd smartagent-code-sourcemap/package
+cd package
 npm install  # 或使用 yarn/pnpm
 
 # 2. 直接运行编译后的版本
@@ -32,35 +33,34 @@ node cli.js --help
 ### 构建环境需求
 - Node.js >= 18.0.0
 - TypeScript
-- Bun (原项目使用 Bun 构建，可改用 webpack/esbuild)
+- tsx（直接运行 TypeScript，无需编译）
 
 ---
 
-## 二、hbruce 限制去除方案
+## 二、认证与依赖解耦方案
 
 ### 2.1 认证层改造 (P0 - 核心关键)
 
-**目标**: 支持 OpenAI/本地模型/第三方 API
+**目标**: 支持 OpenAI/本地模型/第三方 API，不再依赖原 OAuth 订阅体系
 
 #### 需修改文件:
 
 | 文件 | 改动内容 |
 |------|----------|
 | `src/services/api/client.ts` | 移除 OAuth 强依赖，支持自定义 API Key |
-| `src/utils/auth.ts` | 移除 `isSmartAgentAISubscriber()` 检查 |
-| `src/services/smartagentAiLimits.ts` | 禁用配额检查，移除速率限制 |
-| `src/services/smartagentAiLimitsHook.ts` | 移除 quota hook |
+| `src/utils/auth.ts` | 移除原订阅检查逻辑 |
+| `src/services/<limits>.ts` | 禁用配额检查，移除速率限制 |
+| `src/services/<limitsHook>.ts` | 移除 quota hook |
 
 **核心改动示例 (`client.ts`)**:
 ```typescript
 // 原代码: 强制 OAuth
-authToken: isSmartAgentAISubscriber()
-  ? getSmartAgentAIOAuthTokens()?.accessToken
+authToken: isOriginalSubscriber()
+  ? getOriginalOAuthTokens()?.accessToken
   : undefined,
 
 // 改为: 支持多种认证方式
-apiKey: process.env.OPENAI_API_KEY || 
-         process.env.ANTHROPIC_API_KEY ||
+apiKey: process.env.OPENAI_API_KEY ||
          getCustomApiKey(),
 baseURL: process.env.API_BASE_URL || 'https://api.openai.com/v1',
 ```
@@ -72,13 +72,13 @@ baseURL: process.env.API_BASE_URL || 'https://api.openai.com/v1',
 | 文件 | 改动内容 |
 |------|----------|
 | `src/constants/system.ts` | 修改 `DEFAULT_PREFIX` 为自定义名称 |
-| `src/constants/prompts.ts` | 重写系统提示词，移除 hbruce 相关内容 |
+| `src/constants/prompts.ts` | 重写系统提示词，移除原产品名引用 |
 | `src/constants/systemPromptSections.ts` | 调整各 section 内容 |
 
 **改动示例 (`system.ts`)**:
 ```typescript
-// 原代码:
-const DEFAULT_PREFIX = `You are SmartAgent Code, hbruce's official CLI for SmartAgent.`
+// 原代码: 包含原产品名和公司品牌
+const DEFAULT_PREFIX = `You are [原产品名], [原公司]'s official CLI for [原产品名].`
 
 // 改为:
 const DEFAULT_PREFIX = `You are Personal Agent, a customizable AI assistant for productivity automation.`
@@ -92,10 +92,9 @@ const DEFAULT_PREFIX = `You are Personal Agent, a customizable AI assistant for 
 - `src/services/api/providers/BaseProvider.ts`
 - `src/services/api/providers/OpenAIProvider.ts`
 - `src/services/api/providers/OllamaProvider.ts`
-- `src/services/api/providers/hbruceProvider.ts`
 
 **修改文件:**
-- `src/services/api/smartagent.ts` - 核心调用逻辑适配多 provider
+- `src/services/api/<provider>.ts` - 核心调用逻辑适配多 provider
 
 ### 2.4 移除限制相关模块 (P1)
 
@@ -241,8 +240,8 @@ interface StorageService {
 
 ### Phase 1: 基础解耦 (Week 1)
 - [x] 创建 feature/personal-agent 分支
-- [x] 移除 hbruce OAuth 强依赖 (`client.ts`, `auth.ts`)
-- [x] 禁用 quota 检查 (`smartagentAiLimits.ts`)
+- [x] 移除原 OAuth 强依赖 (`client.ts`, `auth.ts`)
+- [x] 禁用 quota 检查 (`<limits>.ts`)
 - [x] 修改系统提示词去品牌化 (`system.ts`, `prompts.ts`)
 - [x] 支持 OpenAI API / 自定义 baseURL
 - [x] 创建环境配置模板 (`.env.example`)
@@ -273,7 +272,7 @@ interface StorageService {
 
 ### Phase 6: iPhone 远程控制 (Week 9-10)
 
-**目标**: 通过 iPhone App 远程控制桌面端 Personal Agent，完全不依赖 Anthropic 云服务。
+**目标**: 通过 iPhone App 远程控制桌面端 Personal Agent。
 
 #### 架构
 ```
@@ -305,13 +304,13 @@ iPhone App (SwiftUI) ←→ 中继服务器 (Node.js) ←→ CLI Agent (PC)
 - [x] 顶层 README.md 更新
 - [ ] Docker 部署到内网 VPS（需 Docker 环境）
 
-#### 去 Anthropic 化保证
-- 不依赖 Anthropic Claude API（CLI 使用 OPENAI_API_KEY + API_BASE_URL）
-- 不依赖 Anthropic OAuth（自建 JWT + 配对码认证）
-- 不依赖 Anthropic CCR 云桥（自建 WebSocket 中继）
-- 不引用 SDKMessage 类型（自定义 AgentMessage）
-- 不使用 GrowthBook Feature Flags
-- 不检查 claude.ai 订阅
+#### 自主可控保证
+- LLM 通过 `OPENAI_API_KEY` + `API_BASE_URL` 环境变量配置，可切换任何 OpenAI 兼容 API
+- 认证：自建 JWT + 预共享密钥 + 6 位配对码
+- 中继：自建 Node.js WebSocket Hub
+- 消息协议：自研 `AgentMessage` 类型
+- 特性配置：环境变量，无远程 Feature Flag
+- 无第三方云服务订阅检查
 
 ---
 
@@ -320,9 +319,9 @@ iPhone App (SwiftUI) ←→ 中继服务器 (Node.js) ←→ CLI Agent (PC)
 ### 5.1 模型选择
 | 场景 | 推荐模型 | 原因 |
 |------|----------|------|
-| 通用对话 | GPT-4o / SmartAgent Sonnet | 推理能力强 |
+| 通用对话 | GPT-4o / Claude Sonnet | 推理能力强 |
 | 代码任务 | GPT-4o / DeepSeek Coder | 代码理解好 |
-| 金融分析 | SmartAgent / GPT-4o | 数据处理强 |
+| 金融分析 | GPT-4o | 数据处理强 |
 | 本地隐私 | Ollama + Qwen2.5 | 数据不出境 |
 | 高频量化 | 小模型 + 规则引擎 | 延迟敏感 |
 
@@ -363,9 +362,9 @@ iPhone App (SwiftUI) ←→ 中继服务器 (Node.js) ←→ CLI Agent (PC)
 - ⚠️ 使用金融 API 注意调用频率限制
 
 ### 6.2 技术风险
-- 原项目深度绑定 hbruce SDK，解耦工作量大
-- Source map 还原的代码可能不完整
-- 需要处理 Bun 特有语法 (如 `feature('xxx')`)
+- 原项目深度绑定单一供应商 SDK，解耦工作量大
+- TypeScript 编译产物还原的代码可能不完整
+- 可能需要处理编译时特性开关 (如 `feature('xxx')`)
 
 ### 6.3 建议
 1. 先跑通最小可行性版本 (MVP)
@@ -379,15 +378,15 @@ iPhone App (SwiftUI) ←→ 中继服务器 (Node.js) ←→ CLI Agent (PC)
 
 ```bash
 # 进入项目目录
-cd d:\Users\bruce01.huang\CodeBuddy\20260417164910\smartagent-code-sourcemap
+cd /path/to/personal-agent
 
 # 查看当前分支
 git branch
 
 # 切换到开发分支
-git checkout feature/personal-agent
+git checkout main
 
-# 直接运行原始版本 (需要 Node.js >= 18)
+# 直接运行 CLI (需要 Node.js >= 18)
 cd package && node cli.js
 
 # 设置环境变量后运行 (推荐)

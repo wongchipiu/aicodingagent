@@ -1,7 +1,7 @@
 /**
  * 中继服务器内部类型定义
  *
- * 不引用 Anthropic SDK，完全自定义。
+ * 完全自定义，无外部 SDK 依赖。
  */
 
 import type { WebSocket } from 'ws'

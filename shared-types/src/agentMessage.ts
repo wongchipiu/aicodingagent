@@ -1,8 +1,8 @@
 /**
- * AgentMessage — 自定义消息类型，替代 Anthropic SDKMessage
+ * AgentMessage — 三端共享的消息类型定义
  *
  * 本文件定义了 Personal Agent 中继协议中所有消息的通用类型。
- * 不引用任何 Anthropic SDK 类型，完全独立定义。
+ * 零外部 SDK 依赖，完全独立定义。
  */
 
 // ==================== 基础内容类型 ====================

@@ -233,20 +233,19 @@ npm run test:e2e
 - WebSocket: 连接（CLI/iPhone）、未授权拒绝
 - 消息路由: 用户消息双向、权限请求/响应、流式分块、心跳握手
 
-## 7. 去 Anthropic 化清单
+## 7. 自主可控技术清单
 
-| 禁止项 | 状态 | 替代实现 |
-|--------|------|----------|
-| Anthropic Claude API | ✅ 避免 | OpenAI / Ollama / DeepSeek 任意 |
-| Anthropic OAuth | ✅ 避免 | JWT + 配对码自建认证 |
-| Anthropic CCR 云桥 | ✅ 避免 | 自建 WebSocket 中继 |
-| Anthropic Environments API | ✅ 避免 | 中继自建会话管理 |
-| Anthropic WebSocket | ✅ 避免 | 中继自建 WS 路由 |
-| GrowthBook Feature Flags | ✅ 避免 | 环境变量配置 |
-| `anthropic-version` HTTP 头 | ✅ 避免 | 自定义 `Authorization: Bearer` |
-| `SDKMessage` 类型 | ✅ 避免 | 自定义 `AgentMessage` |
-| `smartagent` 命令名 | ✅ 避免 | `pa` 命令 |
-| `isSmartAgentAISubscriber()` | ✅ 避免 | 完全移除订阅检查 |
+Personal Agent 三端均不依赖任何外部云服务，所有能力自建：
+
+| 能力 | 实现方式 |
+|------|----------|
+| LLM Provider | OpenAI / Ollama / DeepSeek 任意 OpenAI 兼容 API |
+| 用户认证 | JWT + 预共享密钥 + 6 位配对码（自建） |
+| 中继服务 | 自建 Node.js WebSocket Hub |
+| 会话管理 | 中继内置 SessionStore |
+| 消息协议 | 自定义 `AgentMessage` 类型 |
+| 命令命名 | `pa`（Personal Agent 缩写） |
+| 特性开关 | 环境变量配置，无远程 Feature Flag |
 
 ## 8. 未来增强 (Phase 3+)
 

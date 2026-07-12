@@ -5,7 +5,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Node](https://img.shields.io/badge/Node-%E2%89%A518-green)](https://nodejs.org)
 [![iOS](https://img.shields.io/badge/iOS-17%2B-blue)](https://developer.apple.com)
-[![Zero Anthropic](https://img.shields.io/badge/Anthropic-Free-orange)]()
+[![Self Hosted](https://img.shields.io/badge/Self--Hosted-Yes-brightgreen)]()
 
 Personal Agent 是一个**个人使用的 AI Agent 框架**，核心特性：
 
@@ -191,9 +191,9 @@ iOS 17+ SwiftUI 原生应用：
 ## 技术亮点
 
 ### 完全去品牌化
-- ❌ 无 OAuth / 无 claude.ai 订阅检查 / 无 `anthropic-version` HTTP 头
-- ❌ 无 GrowthBook Feature Flags / 无远程管理
-- ❌ 无 SDKMessage 类型（自定义 `AgentMessage` 替代）
+- ❌ 无 OAuth / 无远程订阅检查
+- ❌ 无远程 Feature Flag 管理系统
+- ❌ 无外部 SDK 消息类型（自研 `AgentMessage`）
 - ✅ LLM Provider 完全用户自主（OpenAI / Ollama / DeepSeek / 任意兼容 API）
 
 ### 三端解耦
@@ -216,6 +216,6 @@ iOS 17+ SwiftUI 原生应用：
 
 ## 致谢
 
-- Personal Agent 基于 [claude-code](https://www.npmjs.com/package/@anthropic-ai/claude-code) 的开源代码进行二次开发
-- LLM Provider 接入使用 OpenAI 标准协议
-- 移动端使用 Apple SwiftUI 框架
+- LLM Provider 接入遵循 OpenAI 标准协议
+- 移动端基于 Apple SwiftUI 框架开发
+- 中继服务器使用社区成熟的 Node.js 生态（Express / ws / jsonwebtoken）

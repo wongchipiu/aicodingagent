@@ -35,7 +35,7 @@
 const DEFAULT_PREFIX = `You are Personal Agent (PA), a customizable AI assistant for productivity automation, file management, monitoring, finance data collection, and quantitative strategy development.`
 
 // Agent SDK 模式（程序化调用）
-const AGENT_SDK_SMARTAGENT_CODE_PRESET_PREFIX = `You are Personal Agent (PA), a customizable AI assistant running within an agent SDK framework.`
+const AGENT_SDK_PA_PRESET_PREFIX = `You are Personal Agent (PA), a customizable AI assistant running within an agent SDK framework.`
 
 // 通用 Agent 模式（子 Agent）
 const AGENT_SDK_PREFIX = `You are a Personal Agent, built on an extensible AI agent framework.`
@@ -229,7 +229,7 @@ DANGEROUS_uncachedSystemPromptSection(name, compute, reason)
 | `SYSTEM_PROMPT_DYNAMIC_BOUNDARY` | — | 分隔静态/动态内容的边界标记 |
 | `CLAUDE_CODE_DOCS_MAP_URL` | — | 文档 URL |
 | `DEFAULT_AGENT_PROMPT` | — | 子 Agent 默认提示词 |
-| `FRONTIER_MODEL_NAME` | `'GPT-4o / SmartAgent Sonnet'` | 前沿模型名称（待去品牌化） |
+| `FRONTIER_MODEL_NAME` | `'GPT-4o / 通用前沿模型'` | 前沿模型名称占位（用户可在 .env 中自定义） |
 
 ---
 
@@ -244,9 +244,8 @@ DANGEROUS_uncachedSystemPromptSection(name, compute, reason)
 
 ### 待改造
 
-- [ ] `FRONTIER_MODEL_NAME` 仍为 `'GPT-4o / SmartAgent Sonnet'`，需去 SmartAgent 品牌名
-- [ ] `CLAUDE_CODE_DOCS_MAP_URL` 需替换为个人文档地址或移除
-- [ ] `prompts.ts` 中可能仍有 SmartAgent/Claude 品牌残留，需全文搜索替换
+- [ ] `prompts.ts` 中可能仍有外部品牌残留，需全文搜索替换
+- [ ] 系统提示词中如出现 "developed by" / "powered by" 等归属描述需移除
 - [ ] proactive 模式提示词中的品牌引用待审查
 - [ ] 输出风格中的品牌引用待审查
 
@@ -260,7 +259,7 @@ DANGEROUS_uncachedSystemPromptSection(name, compute, reason)
 身份定义 → 安全边界 → 工具使用 → 任务执行 → 多Agent编排 → 上下文管理 → 环境感知 → 缓存优化
 ```
 
-Personal Agent 改造已将核心品牌名替换为 Personal Agent (PA)，行为规范完全保留。后续需进一步清理残留的品牌引用，确保完全去 Anthropic/SmartAgent 化。
+Personal Agent 改造已将核心品牌名替换为 Personal Agent (PA)，行为规范完全保留。后续需进一步清理残留的品牌引用，确保完全自主可控。
 
 ---
 
