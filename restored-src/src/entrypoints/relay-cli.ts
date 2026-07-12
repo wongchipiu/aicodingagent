@@ -21,7 +21,7 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs'
 import { join, resolve, dirname, relative } from 'path'
 import { execSync, spawn } from 'child_process'
 import { spawn as BunSpawn } from 'bun'
-import Anthropic from '@anthropic-ai/sdk'
+import { createLLMProvider, type LLMProvider, type ToolDefinition } from '../llm/provider'
 import WebSocket from 'ws'
 
 // ============================================================
@@ -391,7 +391,7 @@ const GLOB_TOOL = {
   },
 }
 
-const ALL_TOOLS = [BASH_TOOL, FILE_READ_TOOL, FILE_WRITE_TOOL, FILE_EDIT_TOOL, GREP_TOOL, GLOB_TOOL]
+const ALL_TOOLS: ToolDefinition[] = [BASH_TOOL, FILE_READ_TOOL, FILE_WRITE_TOOL, FILE_EDIT_TOOL, GREP_TOOL, GLOB_TOOL]
 
 // Tools that require permission
 const DANGEROUS_TOOLS = new Set(['Bash', 'FileWrite', 'FileEdit'])
@@ -489,7 +489,7 @@ When the user asks you to do something on their computer, use the appropriate to
 Be concise and helpful. If a tool fails, explain the error and suggest alternatives.`
 
 async function processMessage(
-  client: Anthropic,
+  provider: LLMProvider,
   connector: SimpleRelayConnector,
   permissionBridge: SimplePermissionBridge,
   sessionId: string,
@@ -522,13 +522,12 @@ async function processMessage(
 
     let response
     try {
-      response = await client.messages.create({
-        model: process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-20250514',
-        max_tokens: 4096,
+      response = await provider.createMessage({
         system: SYSTEM_PROMPT,
         messages: messageHistory,
-        tools: ALL_TOOLS as any,
-      }, { signal: abortController.signal })
+        tools: ALL_TOOLS,
+        abortSignal: abortController.signal,
+      })
     } catch (e: any) {
       if (e.name === 'AbortError') {
         connector.sendResult(sessionId, {
@@ -562,7 +561,7 @@ async function processMessage(
     }
 
     // If no tool calls, we're done
-    if (toolUseBlocks.length === 0 || response.stop_reason === 'end_turn') {
+    if (toolUseBlocks.length === 0 || response.stopReason === 'end_turn') {
       connector.sendAssistantChunk(sessionId, '', true)
       connector.sendResult(sessionId, {
         subtype: 'success',
@@ -646,17 +645,27 @@ async function main(): Promise<void> {
       '\n❌ Relay configuration not found.\n\n' +
         'Set environment variables:\n' +
         '  PA_RELAY_URL  — Relay server URL (e.g., http://192.168.1.100:7780)\n' +
-        '  PA_RELAY_KEY  — Pre-shared secret key\n\n' +
-        'Also set:\n' +
-        '  ANTHROPIC_API_KEY  — Your Anthropic API key\n',
+        '  PA_RELAY_KEY  — Pre-shared secret key\n',
     )
     process.exit(1)
   }
 
-  // Check API key
-  const apiKey = process.env.ANTHROPIC_API_KEY
-  if (!apiKey) {
-    console.error('\n❌ ANTHROPIC_API_KEY environment variable not set.\n')
+  // Create LLM provider (supports Anthropic and OpenAI-compatible APIs)
+  let provider: LLMProvider
+  try {
+    provider = createLLMProvider()
+  } catch (e: any) {
+    console.error(`\n❌ ${e.message}\n`)
+    console.error('Set environment variables for your LLM provider:\n')
+    console.error('  Option 1 — Anthropic:')
+    console.error('    LLM_PROVIDER=anthropic')
+    console.error('    ANTHROPIC_API_KEY=sk-ant-xxx')
+    console.error('    ANTHROPIC_MODEL=claude-sonnet-4-20250514  (optional)\n')
+    console.error('  Option 2 — OpenAI-compatible (火山引擎/DeepSeek/通义千问):')
+    console.error('    LLM_PROVIDER=openai')
+    console.error('    OPENAI_API_KEY=your-api-key')
+    console.error('    OPENAI_BASE_URL=https://ark.cn-beijing.volces.com/api/v3')
+    console.error('    OPENAI_MODEL=doubao-pro-32k  (or other model name)\n')
     process.exit(1)
   }
 
@@ -696,9 +705,6 @@ async function main(): Promise<void> {
   console.log(`✅ Session: ${sessionId}`)
   console.log(`📁 Work dir: ${workDir}`)
 
-  // Create Anthropic client
-  const client = new Anthropic({ apiKey })
-
   // Create relay connector
   const connector = new SimpleRelayConnector(config.wsUrl, reg.token)
   const permissionBridge = new SimplePermissionBridge(connector)
@@ -721,7 +727,7 @@ async function main(): Promise<void> {
 
     // Start new request
     currentAbortController = new AbortController()
-    processMessage(client, connector, permissionBridge, sessionId, content, messageHistory, workDir, currentAbortController).catch((e) => {
+    processMessage(provider, connector, permissionBridge, sessionId, content, messageHistory, workDir, currentAbortController).catch((e) => {
       console.error(`[Agent] Error: ${e.message}`)
     })
   }

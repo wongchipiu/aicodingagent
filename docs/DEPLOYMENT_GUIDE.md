@@ -28,6 +28,8 @@ Personal Agent 由三个组件组成：
 │  (Agent)    │                            │  (Node.js)   │                            │  (SwiftUI)   │
 │             │                            │  自建部署     │                            │             │
 │ LLM:        │                            │              │                            │             │
+│ Anthropic / │                            │              │                            │             │
+│ 火山引擎 /   │                            │              │                            │             │
 │ OpenAI /    │                            │              │                            │             │
 │ Ollama      │                            │              │                            │             │
 └─────────────┘                            └──────────────┘                            └──────────────┘
@@ -56,7 +58,7 @@ Personal Agent 由三个组件组成：
 | 依赖 | 最低版本 |
 |------|----------|
 | Node.js | 18.0+（推荐 20 LTS） |
-| LLM API Key | OpenAI / Ollama / DeepSeek / 任何 OpenAI 兼容 API |
+| LLM API Key | Anthropic / OpenAI / 火山引擎 / Ollama / DeepSeek / 任何 OpenAI 兼容 API |
 
 ### 2.3 iPhone App
 
@@ -167,6 +169,8 @@ PA_RELAY_URL=http://your-relay-server:7780
 PA_RELAY_KEY=my-strong-secret-2026
 ```
 
+> **Relay 模式（`relay-cli.ts`）额外支持 Anthropic 原生 API 和火山引擎方舟**，通过 `LLM_PROVIDER` 环境变量切换，详见 [§8. 进阶：切换 LLM](#8-进阶切换-llm)。
+
 ### 4.2 安装依赖
 
 ```bash
@@ -192,6 +196,18 @@ npx tsx src/main.tsx
 | `PA_RELAY_URL` | 远程控制时必填 | 中继服务器地址 |
 | `PA_RELAY_KEY` | 远程控制时必填 | 与中继服务器相同的密钥 |
 | `PA_MODEL` | ❌ | 模型名（默认由 provider 决定） |
+
+**Relay 模式（`relay-cli.ts`）额外环境变量：**
+
+| 变量 | 必填 | 说明 |
+|------|------|------|
+| `LLM_PROVIDER` | ❌ | LLM 提供商：`anthropic`（默认）或 `openai` |
+| `ANTHROPIC_API_KEY` | Anthropic 模式必填 | Anthropic API Key |
+| `ANTHROPIC_MODEL` | ❌ | Anthropic 模型名（默认 `claude-sonnet-4-20250514`） |
+| `ANTHROPIC_BASE_URL` | ❌ | Anthropic 自定义 Base URL（用于代理） |
+| `OPENAI_API_KEY` | OpenAI 模式必填 | OpenAI 兼容 API Key |
+| `OPENAI_BASE_URL` | OpenAI 模式必填 | API Base URL（如火山引擎 `https://ark.cn-beijing.volces.com/api/v3`） |
+| `OPENAI_MODEL` | ❌ | 模型名（如 `doubao-pro-32k`、`deepseek-chat`） |
 
 ---
 
@@ -555,6 +571,16 @@ cd restored-src
 npx tsx src/cli/handlers/remoteRelay.ts --pair
 ```
 
+> **Relay 模式**（`relay-cli.ts`）用户请改用以下环境变量并运行 `bun run relay:pair`：
+> ```powershell
+> $env:LLM_PROVIDER="anthropic"  # 或 "openai"
+> $env:ANTHROPIC_API_KEY="sk-ant-xxx"
+> # OpenAI 兼容模式: $env:OPENAI_API_KEY / $env:OPENAI_BASE_URL / $env:OPENAI_MODEL
+> cd restored-src
+> bun run relay:pair
+> ```
+> 详见 [§8.2 Relay 模式 LLM 配置](#82-relay-模式relay-clits)。
+
 终端显示类似：
 
 ```
@@ -612,6 +638,13 @@ $env:OPENAI_API_KEY="sk-xxx"
 npx tsx src/cli/handlers/remoteRelay.ts
 ```
 
+> **Relay 模式**（`relay-cli.ts`）用户：
+> ```bash
+> cd restored-src
+> bun run relay
+> ```
+> LLM 配置见 [§8.2](#82-relay-模式relay-clits)。
+
 打开 iPhone App → 自动连接 → 发消息。
 
 ### 7.2 iPhone App 功能
@@ -648,9 +681,11 @@ npx tsx src/cli/handlers/remoteRelay.ts
 
 ## 8. 进阶：切换 LLM
 
+### 8.1 主 CLI 模式（`main.tsx` / `remoteRelay.ts`）
+
 修改 PC 端 `.env` 即可切换 LLM，**无需重启中继服务器**：
 
-### 切换到 OpenAI
+#### 切换到 OpenAI
 
 ```bash
 OPENAI_API_KEY=sk-xxx
@@ -658,7 +693,7 @@ API_BASE_URL=https://api.openai.com/v1
 PA_MODEL=gpt-4o
 ```
 
-### 切换到 Ollama（本地模型）
+#### 切换到 Ollama（本地模型）
 
 ```bash
 # 先启动 Ollama: ollama serve
@@ -667,7 +702,7 @@ API_BASE_URL=http://localhost:11434/v1
 PA_MODEL=qwen2.5:14b
 ```
 
-### 切换到 DeepSeek
+#### 切换到 DeepSeek
 
 ```bash
 OPENAI_API_KEY=sk-your-deepseek-key
@@ -675,9 +710,107 @@ API_BASE_URL=https://api.deepseek.com/v1
 PA_MODEL=deepseek-chat
 ```
 
-### 切换到任意 OpenAI 兼容 API（vLLM、LM Studio、Azure OpenAI 等）
+#### 切换到任意 OpenAI 兼容 API（vLLM、LM Studio、Azure OpenAI 等）
 
 只需保证 `API_BASE_URL` 指向兼容 `/v1/chat/completions` 端点即可。
+
+### 8.2 Relay 模式（`relay-cli.ts`）
+
+Relay 模式通过 `LLM_PROVIDER` 环境变量切换 LLM 后端，支持 **Anthropic 原生 API** 和 **任何 OpenAI 兼容 API**（火山引擎方舟、DeepSeek、通义千问等）。
+
+内部实现了一个统一的 LLM Provider 抽象层（`src/llm/provider.ts`），自动完成 Anthropic ↔ OpenAI 格式转换：
+
+- 工具定义：`input_schema` ↔ `function.parameters`
+- 消息历史：`tool_use` block ↔ `tool_calls`，`tool_result` block ↔ `role: 'tool'`
+- 停止原因：`end_turn` ↔ `stop`，`tool_use` ↔ `tool_calls`
+
+#### 方式 A：Anthropic 原生 API（默认）
+
+```bash
+# .env 或环境变量
+LLM_PROVIDER=anthropic
+ANTHROPIC_API_KEY=sk-ant-your-key
+ANTHROPIC_MODEL=claude-sonnet-4-20250514   # 可选，默认即此值
+# ANTHROPIC_BASE_URL=https://your-proxy.example.com  # 可选，用于代理
+```
+
+启动：
+
+```bash
+cd restored-src
+bun run relay
+# 或配对模式
+bun run relay:pair
+```
+
+#### 方式 B：火山引擎方舟（Doubao）
+
+```bash
+LLM_PROVIDER=openai
+OPENAI_API_KEY=your-volcengine-api-key
+OPENAI_BASE_URL=https://ark.cn-beijing.volces.com/api/v3
+OPENAI_MODEL=doubao-pro-32k
+```
+
+#### 方式 C：DeepSeek
+
+```bash
+LLM_PROVIDER=openai
+OPENAI_API_KEY=sk-your-deepseek-key
+OPENAI_BASE_URL=https://api.deepseek.com/v1
+OPENAI_MODEL=deepseek-chat
+```
+
+#### 方式 D：通义千问（阿里云百炼）
+
+```bash
+LLM_PROVIDER=openai
+OPENAI_API_KEY=sk-your-dashscope-key
+OPENAI_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
+OPENAI_MODEL=qwen-max
+```
+
+#### 方式 E：Ollama 本地模型
+
+```bash
+LLM_PROVIDER=openai
+OPENAI_API_KEY=ollama
+OPENAI_BASE_URL=http://localhost:11434/v1
+OPENAI_MODEL=qwen2.5:14b
+```
+
+#### Windows PowerShell 完整启动示例（火山引擎）
+
+```powershell
+$env:LLM_PROVIDER="openai"
+$env:OPENAI_API_KEY="your-volcengine-key"
+$env:OPENAI_BASE_URL="https://ark.cn-beijing.volces.com/api/v3"
+$env:OPENAI_MODEL="doubao-pro-32k"
+$env:PA_RELAY_URL="http://your-relay-server:7780"
+$env:PA_RELAY_KEY="my-strong-secret-2026"
+
+cd restored-src
+bun run relay
+```
+
+#### Linux/macOS 完整启动示例（火山引擎）
+
+```bash
+export LLM_PROVIDER=openai
+export OPENAI_API_KEY=your-volcengine-key
+export OPENAI_BASE_URL=https://ark.cn-beijing.volces.com/api/v3
+export OPENAI_MODEL=doubao-pro-32k
+export PA_RELAY_URL=http://your-relay-server:7780
+export PA_RELAY_KEY=my-strong-secret-2026
+
+cd restored-src
+bun run relay
+```
+
+> **提示**：切换 LLM 后无需修改 iPhone App 或中继服务器，只需重启 CLI 即可生效。启动时控制台会打印当前 provider 和模型信息：
+> ```
+> [LLM] Provider: OpenAI-compatible, Base URL: https://ark.cn-beijing.volces.com/api/v3, Model: doubao-pro-32k
+> ```
 
 ---
 
@@ -698,7 +831,10 @@ PA_MODEL=deepseek-chat
 |------|------|
 | `Relay configuration not found` | 设置 `PA_RELAY_URL` 和 `PA_RELAY_KEY` |
 | `Failed to register with relay server` | 中继未运行 / 地址错 / 密钥不一致 |
-| LLM 调用失败 | `OPENAI_API_KEY` / `API_BASE_URL` 配置错误 |
+| `ANTHROPIC_API_KEY environment variable not set` | Relay 模式未设 Anthropic Key，或设置 `LLM_PROVIDER=openai` 切换到 OpenAI 兼容模式 |
+| `OPENAI_API_KEY (or LLM_API_KEY) environment variable not set` | Relay 模式 `LLM_PROVIDER=openai` 但未设 API Key |
+| `OPENAI_BASE_URL (or LLM_BASE_URL) environment variable not set` | Relay 模式 `LLM_PROVIDER=openai` 但未设 Base URL |
+| LLM 调用失败 | 检查 API Key / Base URL / 模型名是否正确 |
 | `tsx` 命令不存在 | `npm install -g tsx` 或使用 `npx tsx` |
 
 ### 9.3 iPhone App
@@ -734,7 +870,7 @@ PA_RELAY_KEY=test-key npm run test:e2e
 ```
 □ 1. 中继服务器部署并运行（curl /health 返回 ok）
 □ 2. PA_RELAY_KEY 已设置为强随机密钥
-□ 3. CLI .env 配置完成（OPENAI_API_KEY, API_BASE_URL, PA_RELAY_URL, PA_RELAY_KEY）
+□ 3. CLI .env 配置完成（LLM Provider + PA_RELAY_URL + PA_RELAY_KEY）
 □ 4. CLI 端能成功注册（看到 "Registered. Client ID: ..."）
 □ 5. iPhone App 已通过 Xcode 编译安装
 □ 6. iPhone App 输入正确 Server URL + Pair Code 完成配对
