@@ -44,7 +44,7 @@ Personal Agent 是一个**个人使用的 AI Agent 框架**，核心特性：
 | 组件 | 目录 | 作用 | 技术栈 |
 |------|------|------|--------|
 | 中继服务器 | `relay/` | 桥接 CLI 与 iPhone 的 WebSocket，路由消息 | Node.js + Express + ws + JWT |
-| CLI Agent | `restored-src/` | LLM 调用、工具执行、本地权限拦截 | TypeScript (Node.js ≥ 18) |
+| CLI Agent | `restored-src/` | LLM 调用、工具执行、本地权限拦截（基于改造的开源 CLI） | TypeScript (Node.js ≥ 18) |
 | iPhone App | `iphone-app/` | 远程对话、权限审批、会话管理 | SwiftUI + iOS 17+ |
 | 共享协议 | `shared-types/` | 三端共用的消息类型与认证协议 | TypeScript |
 
@@ -180,11 +180,10 @@ iOS 17+ SwiftUI 原生应用：
 
 | 文档 | 用途 |
 |------|------|
-| **[DEPLOYMENT_GUIDE.md](docs/DEPLOYMENT_GUIDE.md)** | 部署、安装、使用完整手册（推荐首读） |
-| [PERSONAL_AGENT_PLAN.md](docs/PERSONAL_AGENT_PLAN.md) | 项目设计计划与阶段路线图 |
-| [SYSTEM_PROMPT_AUDIT.md](docs/SYSTEM_PROMPT_AUDIT.md) | 系统提示词品牌化清理审计 |
+| **[docs/DEPLOYMENT_GUIDE.md](docs/DEPLOYMENT_GUIDE.md)** | 部署、安装、使用完整手册（推荐首读） |
 | [relay/README.md](relay/README.md) | 中继服务器专属说明 |
 | [iphone-app/README.md](iphone-app/README.md) | iPhone App 构建说明 |
+| [NOTICE](NOTICE) | 代码来源与许可说明 |
 
 ---
 
@@ -219,3 +218,8 @@ iOS 17+ SwiftUI 原生应用：
 - LLM Provider 接入遵循 OpenAI 标准协议
 - 移动端基于 Apple SwiftUI 框架开发
 - 中继服务器使用社区成熟的 Node.js 生态（Express / ws / jsonwebtoken）
+- CLI 部分基于开源代码改造，详见 [NOTICE](NOTICE)
+
+## 许可证
+
+本仓库自研代码（`relay/`、`shared-types/`、`iphone-app/`、`docs/`、配置文件）遵循 [MIT License](LICENSE)。`restored-src/` 中改造的源码保留原始许可，详见 [NOTICE](NOTICE)。

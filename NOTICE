@@ -1,0 +1,34 @@
+NOTICE — Source Code Provenance
+
+This repository contains two categories of code:
+
+1. SELF-AUTHORED CODE (MIT License)
+   - relay/         — Standalone Node.js relay server (personal-agent/aicodingagent, 2026)
+   - shared-types/  — Shared TypeScript protocol types (personal-agent/aicodingagent, 2026)
+   - iphone-app/    — Native iOS SwiftUI application (personal-agent/aicodingagent, 2026)
+   - docs/          — Documentation written for this project
+   - README.md      — Project documentation
+   - docker-compose.yml, .env.example, .gitignore — Configuration
+
+2. ADAPTED CODE (preserved for reference; see docs/PERSONAL_AGENT_PLAN.md
+   for the modification history)
+   - restored-src/src/ — TypeScript files restored from a public npm
+     package's source map (v2.1.88) and subsequently modified for use as
+     the Personal Agent CLI. The original package is distributed under
+     its own license.
+
+CREDITS
+
+The CLI portion (restored-src/) is derived from publicly distributed
+package code. It is included here as a working starting point for the
+Personal Agent project. The original authors retain copyright over the
+unmodified portions of that code.
+
+If you are the original author and have concerns about inclusion, please
+open an issue and the maintainers will respond promptly.
+
+LICENSE
+
+All self-authored code in this repository is released under the MIT
+License (see LICENSE). Adapted code in restored-src/ retains its
+original licensing terms.
