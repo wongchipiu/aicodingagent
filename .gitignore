@@ -23,3 +23,9 @@ Thumbs.db
 .idea/
 *.swp
 *.swo
+
+# Agent 运行时文件
+.agent-sessions/
+.agent-todos.json
+.agent-memory/
+*.log
